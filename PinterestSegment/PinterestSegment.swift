@@ -144,8 +144,8 @@ public struct PinterestSegmentStyle {
         reloadData()
     }
 
-    public func setSelectIndex(index: Int, animated: Bool = true) {
-        setSelectIndex(index: index, animated: animated, sendAction: true)
+    public func setSelectIndex(index: Int, animated: Bool = true, sendAction: Bool = true) {
+        setSelectedIndex(index: index, animated: animated, sendAction: sendAction)
     }
 
     // Target action
@@ -157,21 +157,24 @@ public struct PinterestSegmentStyle {
                 break
             }
         }
-
     }
 
     public func setRichTextTitles(_ titles: [TitleElement]) {
         self._titleElements = titles
     }
 
-    private func setSelectIndex(index: Int, animated: Bool, sendAction: Bool, forceUpdate: Bool = false) {
+    private func setSelectedIndex(index: Int, animated: Bool, sendAction: Bool, forceUpdate: Bool = false) {
 
         guard (index != selectIndex || forceUpdate), index >= 0, index < titleLabels.count else { return }
 
         let currentLabel = titleLabels[index]
-        let offSetX = min(max(0, currentLabel.center.x - bounds.width / 2),
-                          max(0, scrollView.contentSize.width - bounds.width))
-        scrollView.setContentOffset(CGPoint(x: offSetX, y: 0), animated: true)
+        let currentLabelLeftOffset = currentLabel.frame.origin.x - style.titleMargin
+        let shouldMoveCurrentLabelToLeft = (currentLabelLeftOffset + bounds.width) <= scrollView.contentSize.width
+        let offSetX = min(
+            scrollView.contentSize.width - currentLabel.frame.origin.x.truncatingRemainder(dividingBy: bounds.width),
+            max(0, scrollView.contentSize.width - bounds.width)
+        )
+        scrollView.setContentOffset(CGPoint(x: shouldMoveCurrentLabelToLeft ? currentLabelLeftOffset : offSetX, y: 0), animated: true)
 
         if animated {
 
@@ -323,7 +326,7 @@ public struct PinterestSegmentStyle {
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(PinterestSegment.handleTapGesture(_:)))
         addGestureRecognizer(tapGesture)
 
-        setSelectIndex(index: selectIndex, animated: animated, sendAction: sendAction, forceUpdate: true)
+        setSelectedIndex(index: selectIndex, animated: animated, sendAction: sendAction, forceUpdate: true)
 
     }
 }
